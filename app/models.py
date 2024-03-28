@@ -79,6 +79,7 @@ class User(UserMixin, db.Model):
   member_since = db.Column(db.DateTime(), default=datetime.utcnow)
   last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
   avatar_hash = db.Column(db.String(32))
+  posts = db.relationship('Post', backref='author', lazy='dynamic')
 
   def __init__(self, **kwargs):
     super(User, self).__init__(**kwargs)
@@ -160,34 +161,10 @@ class AnonymousUser(AnonymousUserMixin):
   
 login_manager.anonymous_user = AnonymousUser
 
-  # @property
-  # def password(self):
-  #   raise AttributeError('password is not a readable attribute')
-  
-  # @password.setter
-  # def password(self, password):
-  #   self.password_hash = generate_password_hash(password)
-  
-  # def verify_password(self, password):
-  #   return check_password_hash(self.password_hash, password)
-  
-  # @login_manager.user_loader
-  # def load_user(user_id):
-  #   return User.query.get(int(user_id))
-  
-  # def generate_confirmation_token(self, expiration=3600):
-  #   s = Serializer(current_app.config['SECRET_KEY'])
-  #   return s.dumps({ 'confirm':self.id})
-  
-  # def confirm(self, token):
-  #   s = Serializer(current_app.config['SECRET_KEY'])
-  #   try:
-  #     data = s.loads(token.encode('utf-8'))
-  #   except:
-  #     return False
-  #   if data.get('confirm') != self.id:
-  #     return False
-  #   self.confirmed = True
-  #   db.session.add(self)
-  #   return True
+class Post(db.Model):
+  __tablename__ = 'posts'
+  id = db.Column(db.Integer, primary_key = True)
+  body = db.Column(db.Text)
+  timestamp = db.Column(db.Datetime, index = True, default = datetime.utcnow)
+  author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
