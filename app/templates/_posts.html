@@ -1,5 +1,8 @@
 <html>
 <body>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
 <ul class="posts">
   {% for post in posts %}
     <li class="post">

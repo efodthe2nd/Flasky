@@ -25,6 +25,7 @@ ul.posts li.post {
 }
 ul.posts li.post:hover {
   background-color: #f0f0f0;
+  cursor: pointer;
 }
 div.post-date {
   float: right;
@@ -35,7 +36,7 @@ div.post-author {
 div.post-thumbnail {
   position: absolute;
 }
-div.post-content {
+div.post-body {
   margin-left: 48px;
-  min-height: 48px;
+  min-height: 18px;
 }
