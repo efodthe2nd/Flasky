@@ -1,3 +1,9 @@
+*, :root {
+  text-decoration: none;
+  list-style: none;
+  list-style-type: none;
+}
+
 .profile-thumbnail {
   position: absolute;
 }
@@ -12,6 +18,8 @@ ul.posts {
   border-top: 1px solid #e0e0e0;
 }
 ul.posts li.post {
+  list-style: none;
+  list-style-type: none;
   padding: 8px;
   border-bottom: 1px solid #e0e0e0;
 }
