@@ -164,41 +164,41 @@ class AnonymousUser(AnonymousUserMixin):
 login_manager.anonymous_user = AnonymousUser
 
 class Post(db.Model):
-  __tablename__ = 'posts'
-  id = db.Column(db.Integer, primary_key = True)
-  body = db.Column(db.Text)
-  timestamp = db.Column(db.DateTime, index = True, default = datetime.utcnow)
-  author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-  body_html = db.Column(db.Text)
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    _body = db.Column(db.Text, name='body')
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    body_html = db.Column(db.Text)
 
-  def __init__(self, *args, **kwargs):
-    super(Post, self).__init__(*args, **kwargs)
-    self.on_changed_body(self.body, None)
+    def __init__(self, *args, **kwargs):
+        super(Post, self).__init__(*args, **kwargs)
+        self.on_changed_body(self.body, None)
 
+    @property
+    def body(self):
+        return self._body
 
-  def on_changed_body(target, value, oldvalue=None):
-    if value is None or value == '':
-        target.body_html = None
-    else:
+    @body.setter
+    def body(self, value):
+        self._body = value
+        self.on_changed_body(value, self._body)
+
+    def on_changed_body(self, value, oldvalue=None):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
         try:
-            processed_html = bleach.linkify(bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
-            target.body_html = processed_html
+            if value is None or value == '':
+                self.body_html = None
+            else:
+                processed_html = bleach.linkify(bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+                self.body_html = processed_html
         except Exception as e:
             # Handle any exceptions that occur during processing
-            target.body_html = None
+            self.body_html = None
             print(f"An error occurred: {e}")
 
-  @db.validates('body')
-  def validate_body(self, key, value):
-    self.on_changed_body(value)
-    return value
-  
-  def update_body_html(self):
-    self.on_changed_body(self.body)
+    def update_body_html(self):
+        self.on_changed_body(self.body)
 
-
-  def get_body_html(self):
-    if not self.body_html:
-        self.update_body_html()
-    return self.body_html
+    def __repr__(self):
+        return f'<Post {self.body[:20]}...>'
