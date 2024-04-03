@@ -31,11 +31,12 @@ div.post-date {
 }
 div.post-author {
   font-weight: bold;
+  margin-left: 50px;
 }
 div.post-thumbnail {
   position: absolute;
 }
-div.post-content {
+div.post-body {
   margin-left: 48px;
-  min-height: 48px;
+  min-height: 38px;
 }

@@ -6,6 +6,8 @@ from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask import current_app, request
 from datetime import datetime
 import hashlib
+from markdown import markdown
+import bleach
 
 
 
@@ -167,4 +169,36 @@ class Post(db.Model):
   body = db.Column(db.Text)
   timestamp = db.Column(db.DateTime, index = True, default = datetime.utcnow)
   author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+  body_html = db.Column(db.Text)
 
+  def __init__(self, *args, **kwargs):
+    super(Post, self).__init__(*args, **kwargs)
+    self.on_changed_body(self.body, None)
+
+
+  def on_changed_body(target, value, oldvalue=None):
+    if value is None or value == '':
+        target.body_html = None
+    else:
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
+        try:
+            processed_html = bleach.linkify(bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+            target.body_html = processed_html
+        except Exception as e:
+            # Handle any exceptions that occur during processing
+            target.body_html = None
+            print(f"An error occurred: {e}")
+
+  @db.validates('body')
+  def validate_body(self, key, value):
+    self.on_changed_body(value)
+    return value
+  
+  def update_body_html(self):
+    self.on_changed_body(self.body)
+
+
+  def get_body_html(self):
+    if not self.body_html:
+        self.update_body_html()
+    return self.body_html
