@@ -23,8 +23,8 @@ def index():
   if show_followed:
     query = current_user.followed_posts
   else:
-    query = Post.query.all()
-  pagination = Post.query.order_by(Post.timestamp.desc()).paginate(page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
+    query = Post.query
+  pagination = query.order_by(Post.timestamp.desc()).paginate(page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
   posts = pagination.items
   return render_template('index.html', form=form, posts=posts, pagination=pagination, show_followed=show_followed)
 
@@ -33,7 +33,7 @@ def index():
 @login_required
 def show_all():
   resp = make_response(redirect(url_for('.index')))
-  resp.set_cookie('show_followed', ", max_age=30*24*60*60")
+  resp.set_cookie('show_followed','', max_age=30*24*60*60)
   return resp
 
 @main.route('/user/<username>')
@@ -169,6 +169,9 @@ def followed_by(username):
 @main.route('/followed')
 @login_required
 def show_followed():
+  #followed_users = current_user.followed.all()
+  #followed_user_ids = [user.id for user in followed_users]
   resp = make_response(redirect(url_for('.index')))
   resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+  #resp.set_cookie('followed_user_ids', ','.join(map(str, followed_user_ids)), max_age=30*24*60*60)
   return resp
