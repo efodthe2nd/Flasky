@@ -6,7 +6,7 @@ from .. import db
 from ..models import User, Role, Permission, Post
 from ..email import send_email
 from flask_login import current_user, login_required
-from ..decorators import admin_required
+from ..decorators import admin_required, permission_required
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -108,23 +108,45 @@ def follow(username):
     flash('You are already following this user.')
     return redirect(url_for('.user', username=username))
   current_user.follow(user)
-  db.sessiom.commit()
+  db.session.commit()
   flash('You are now following %s.' %username)
   return redirect(url_for('.user', username=user.username))
 
 
 @main.route('/unfollow/<username>')
 @login_required
-@permission_required(Permission.UNFOLLOW)
-def follow(username):
+@permission_required(Permission.FOLLOW)
+def unfollow(username):
   user = User.query.filter_by(username=username).first()
   if user is None:
     flash('Invalid User')
     return redirect(url_for('.index'))
-  if current_user.is_following(user):
-    flash('You are already following this user.')
+  if not current_user.is_following(user):
+    flash('You are not following this user.')
     return redirect(url_for('.user', username=username))
-  current_user.follow(user)
-  db.sessiom.commit()
-  flash('You are now following %s.' %username)
+  current_user.unfollow(user)
+  db.session.commit()
+  flash('You have now unfollowed %s.' %username)
   return redirect(url_for('.user', username=user.username))
+
+@main.route('/followers/<username>')
+def followers(username):
+  user = User.query.filter_by(username=username).first()
+  if user is None:
+    flash('Invalid user.')
+    return redirect(url_for('.index'))
+  page = request.args.get('page', 1, type=int)
+  pagination = user.followers.paginate(page=page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
+  follows = [{ 'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
+  return render_template('followers.html', user=user, title='Followers of', endpoint='.followers', pagination=pagination, follows=follows)
+
+@main.route('/followed_by/<username>')
+def followed_by(username):
+  user = User.query.filter_by(username=username).first()
+  if user is None:
+    flash('Invalid User.')
+    return redirect(url_for('.index'))
+  page = request.args.get('page', 1, int)
+  pagination = user.followed.paginate(page=page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
+  followed_by = [{ 'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items ]
+  return render_template('followed.html', user=user, title='Following', endpoint='.followed_by', pagination=pagination, followed_by=followed_by) 
